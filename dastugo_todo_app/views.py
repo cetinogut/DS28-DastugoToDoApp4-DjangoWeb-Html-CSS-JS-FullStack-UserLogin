@@ -8,7 +8,7 @@ from django.urls import reverse_lazy # for redirecting user after edits
 
 from django.contrib.auth.views import LoginView # bring the default login view
 from django.contrib.auth.mixins import LoginRequiredMixin # login required restriction added by this mixin
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm # once we create user, we directly login the user with the line below
 from django.contrib.auth import login
 
 # Imports for Reordering Feature
@@ -27,28 +27,28 @@ from .forms import PositionForm
 class CustomLoginView(LoginView):
     template_name = 'dastugo_todo_app/login.html'
     fields = '__all__'
-    redirect_authenticated_user = True # if user already auth. redirect it fro mhere
+    redirect_authenticated_user = True # if user already auth. redirect it from here
 
     def get_success_url(self):
         return reverse_lazy('tasks')
 
 
 class RegisterPage(FormView):
-    template_name = 'base/register.html'
+    template_name = 'dastugo_todo_app/register.html'
     form_class = UserCreationForm
     redirect_authenticated_user = True
     success_url = reverse_lazy('tasks')
 
-    def form_valid(self, form):
+    def form_valid(self, form): #override to auto login the new user
         user = form.save()
-        if user is not None:
-            login(self.request, user)
+        if user is not None: #user created successfully
+            login(self.request, user) # automatically login the new user after success above
         return super(RegisterPage, self).form_valid(form)
 
-    def get(self, *args, **kwargs):
+    """ def get(self, *args, **kwargs): # if the line redirect_authenticated_user = True above is working no need forthis code block
         if self.request.user.is_authenticated:
             return redirect('tasks')
-        return super(RegisterPage, self).get(*args, **kwargs)
+        return super(RegisterPage, self).get(*args, **kwargs) """
 
 
 class TaskList(LoginRequiredMixin, ListView):
@@ -60,8 +60,8 @@ class TaskList(LoginRequiredMixin, ListView):
         context['tasks'] = context['tasks'].filter(user=self.request.user)
         context['count'] = context['tasks'].filter(completed=False).count()
 
-        search_input = self.request.GET.get('search-area') or ''
-        if search_input:
+        search_input = self.request.GET.get('search-area') or '' ## search is a GEt method
+        if search_input: # if there is a search tem do the filtering in title basd on search input
             context['tasks'] = context['tasks'].filter(
                 title__contains=search_input)
 
